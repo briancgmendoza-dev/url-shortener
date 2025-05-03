@@ -1,13 +1,16 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { connectDb } from './database/db';
+import express from 'express'
+import dotenv from 'dotenv'
+import cors from 'cors'
+import { connectDb } from './database/db'
 import urlRoutes from './routes/url-routes'
 
-dotenv.config();
+dotenv.config()
 
-const app = express();
+const app = express()
 
-app.use(express.json());
+app.use(cors())
+
+app.use(express.json())
 
 app.use(express.urlencoded({ extended: true }))
 
@@ -29,4 +32,4 @@ const startServer = async (): Promise<void> => {
   }
 }
 
-startServer();
+startServer()
