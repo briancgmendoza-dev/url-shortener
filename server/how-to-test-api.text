@@ -1,0 +1,13 @@
+Endpoint: http://localhost:{PORT}/api/shorten
+Method: POST
+Body: {
+  "original_url": "https://www.google.com",
+  "slug": "google",
+  "expires_at": "2025-12-31T23:59:59.999Z",
+  "utm_source": "google",
+  "utm_medium": "cpc",
+  "utm_campaign": "test"
+}
+
+Endpoint: http://localhost:8080/api/:shortened_url
+Method: GET
