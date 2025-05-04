@@ -3,17 +3,15 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { postRequest } from "../../service/request"
-import { Toaster } from "../toaster"
 
 const formSchema = z.object({
-  orignal_url: z.string().url('Please enter a valid URL').nonempty('URL is required'),
+  original_url: z.string().url('Please enter a valid URL').nonempty('URL is required'),
   slug: z
     .string()
-    .min(4, "Slug must be atleast 4 characters")
     .max(8, "Slug must be 8 characters or less")
     .regex(/^[a-zA-Z0-9-_]*$/, "Slug can only contain letters, numbers, hyphens and underscores")
     .optional(),
-  expires_at: z.string().datetime('Invalid expiration date').optional(),
+  expires_at: z.string().optional(),
   utm_source: z.string().optional(),
   utm_medium: z.string().optional(),
   utm_campaign: z.string().optional()
@@ -25,7 +23,7 @@ export function Form () {
   const {
     register,
     handleSubmit,
-    setValue,
+    setError,
     formState: { errors },
     reset
   } = useForm<FormData>({ resolver: zodResolver(formSchema) })
@@ -34,26 +32,68 @@ export function Form () {
   const [copied, setCopied] = useState(false)
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    // TODO: Add the other inputs
-    const URL = '/shorten'
-    const params = {
-      "original_url": data?.orignal_url,
-      // "slug": "google",
-      // "expires_at": "2025-12-31T23:59:59.999Z",
-      // "utm_source": "google",
-      // "utm_medium": "cpc",
-      // "utm_campaign": "test"
+    // In backend, validate-url, we are only accepting isISO8601 for expires_at
+    // Maybe convert to timestamp??
+    if (data.expires_at) {
+      const [month, day, year] = data.expires_at.split('-')
+      if (
+        month &&
+        day &&
+        year &&
+        month.length === 2 &&
+        day.length === 2 &&
+        year.length === 4
+      ) {
+        const isoDate = new Date(`${year}-${month}-${day}`).toISOString()
+        data.expires_at = isoDate
+      }
     }
 
-    setIsLoading(true)
-    const response = await postRequest(URL, params)
-    // Since this is only connected it local, I added a timeout to mimic a good response time
-    setTimeout(() => {
-      setShortUrl(response?.shortened_url)
-      setIsLoading(false)
-    }, 1000);
-    reset()
-    setCopied(false)
+    const URL = '/shorten'
+    const params = {
+      "original_url": data?.original_url,
+      "slug": data?.slug || undefined,
+      "expires_at": data?.expires_at || undefined,
+      "utm_source": data?.utm_source || undefined,
+      "utm_medium": data?.utm_medium || undefined,
+      "utm_campaign": data?.utm_campaign || undefined
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await postRequest(URL, params)
+      if (response?.shortened_url) {
+        // Adding setTimeout to mimic a loading when sending an API
+        setTimeout(() => {
+          setShortUrl(response?.shortened_url)
+          setIsLoading(false)
+        }, 1000)
+        reset()
+        setCopied(false)
+      } else {
+        throw new Error()
+      }
+    } catch (error: any) {
+      if (error?.response?.data?.message === 'Validation Failed') {
+        const backendErrors = error?.response?.data?.errors
+        backendErrors.forEach((err: any) => {
+          setError(err.path as keyof FormData, {
+            type: 'server',
+            message: err.msg,
+          })
+        })
+      } else if (error?.response?.data?.message.toLowerCase().includes('slug')) {
+        setError('slug', {
+          type: 'server',
+          message: error?.response?.data?.message
+        })
+      } else {
+        console.log("Error onSubmit: ", error)
+      }
+    } // Finally would be a better way to stop the loading in real scenario
+    // finally {
+    //   setIsLoading(false)
+    // }
   };
 
   const copyToclipboard = () => {
@@ -70,13 +110,13 @@ export function Form () {
           </label>
           <div className="relative">
             <input
-              {...register('orignal_url')}
+              {...register('original_url')}
               type="text"
               placeholder="https://example.com/very/long/url/that/needs/shortening"
               className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
-                errors.orignal_url ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+                errors.original_url ? "border-red-500 focus:ring-red-500" : "border-gray-300"
               }`}
-              />
+            />
             <svg
               className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
               xmlns="http://www.w3.org/2000/svg"
@@ -93,8 +133,58 @@ export function Form () {
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
           </div>
-          {errors.orignal_url && <p className="text-sm text-red-500">{errors.orignal_url.message}</p>}
+          {errors.original_url && <p className="text-sm text-red-500">{errors.original_url.message}</p>}
         </div>
+
+        <input
+          {...register('slug')}
+          type="text"
+          placeholder="Url Identifier"
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+            errors.slug ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+          }`}
+        />
+          {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+
+        <input
+          {...register('expires_at')}
+          type="text"
+          placeholder="Expiration date: MM-DD-YYYY"
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+            errors.expires_at ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+          }`}
+        />
+          {errors.expires_at && <p className="text-sm text-red-500">{errors.expires_at.message}</p>}
+
+        <input
+          {...register('utm_source')}
+          type="text"
+          placeholder="Utm source"
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+            errors.utm_source ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+          }`}
+        />
+          {errors.utm_source && <p className="text-sm text-red-500">{errors.utm_source.message}</p>}
+
+        <input
+          {...register('utm_medium')}
+          type="text"
+          placeholder="Utm medium"
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+            errors.utm_medium ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+          }`}
+        />
+          {errors.utm_medium && <p className="text-sm text-red-500">{errors.utm_medium.message}</p>}
+
+        <input
+          {...register('utm_campaign')}
+          type="text"
+          placeholder="Utm Campaign"
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+            errors.utm_campaign ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+          }`}
+        />
+          {errors.utm_campaign && <p className="text-sm text-red-500">{errors.utm_campaign.message}</p>}
 
         <button
           type="submit"
