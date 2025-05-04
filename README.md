@@ -33,7 +33,7 @@ A simple backend + frontend URL shortener service built with support for custom 
    ```bash
    npm install
    ```
-2. Create .env file with:
+2. Create .env file in server folder with the ff:
    ```js
    PORT=8080
    MYSQL_HOST=your-mysql-host
@@ -47,3 +47,5 @@ A simple backend + frontend URL shortener service built with support for custom 
    
    BASE_URL=http://localhost:8080
    ```
+3. Make sure you have MySQL and Redis installed on your device and both of them should be running.
+4. Run the command ```js npm run start:dev``` in your terminal
