@@ -64,4 +64,4 @@ A simple backend + frontend URL shortener service built with support for custom 
 
 ### Postman Setup
 
-1. Check ```how-to-test-api.text``` for endpoint and params.
+1. Check ```how-to-test-api.text``` for endpoint and params, located in server folder.
