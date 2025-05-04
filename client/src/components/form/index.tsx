@@ -90,6 +90,8 @@ export function Form () {
       } else {
         console.log("Error onSubmit: ", error)
       }
+
+      setIsLoading(false)
     } // Finally would be a better way to stop the loading in real scenario
     // finally {
     //   setIsLoading(false)
