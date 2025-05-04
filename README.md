@@ -48,4 +48,4 @@ A simple backend + frontend URL shortener service built with support for custom 
    BASE_URL=http://localhost:8080
    ```
 3. Make sure you have MySQL and Redis installed on your device and both of them should be running.
-4. Run the command ```js npm run start:dev``` in your terminal
+4. Run the command ```npm run start:dev``` in your terminal
