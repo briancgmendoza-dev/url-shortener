@@ -3,6 +3,7 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { postRequest } from "../../service/request"
+import { Toaster } from "../toaster"
 
 const formSchema = z.object({
   orignal_url: z.string().url('Please enter a valid URL').nonempty('URL is required'),
@@ -30,6 +31,7 @@ export function Form () {
   } = useForm<FormData>({ resolver: zodResolver(formSchema) })
   const [isLoading, setIsLoading] = useState(false)
   const [shortUrl, setShortUrl] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     // TODO: Add the other inputs
@@ -51,7 +53,13 @@ export function Form () {
       setIsLoading(false)
     }, 1000);
     reset()
+    setCopied(false)
   };
+
+  const copyToclipboard = () => {
+    navigator.clipboard.writeText(shortUrl)
+    setCopied(true)
+  }
 
   return (
     <>
@@ -145,7 +153,7 @@ export function Form () {
         <div className="mt-8 pt-6 border-t">
           <h3 className="text-lg font-medium text-gray-900 mb-3">Your shortened URL</h3>
           <div className="flex items-center">
-            <div className="flex-1 bg-gray-50 p-3 rounded-l-md border border-r-0 truncate">
+            <div className="w-[100%] flex items-center justify-between bg-gray-50 p-2 rounded-md border truncate">
               <a
                 href={shortUrl}
                 target="_blank"
@@ -154,32 +162,33 @@ export function Form () {
               >
                 {shortUrl}
               </a>
-            </div>
-            <button
-              type="button"
-              onClick={() => {}}
-              className="rounded-l-none rounded-r-md bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 flex items-center"
-            >
-              <svg
-                className="h-4 w-4 mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              <button
+                type="button"
+                onClick={copyToclipboard}
+                className="rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 flex items-center"
               >
-                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-              </svg>
-              Copy
-            </button>
+                <svg
+                  className="h-4 w-4 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
           </div>
         </div>
       )}
+      {/* {shortUrl && <Toaster />} */}
     </>
   )
 }
