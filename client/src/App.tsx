@@ -1,29 +1,16 @@
-import { useEffect, useState } from "react"
-import { postRequest } from "./service/request"
+import { Container } from "./components/container"
+import { Header } from "./components/header"
+import { Content } from "./components/content"
+import { Footer } from "./components/footer"
 
-function App() {
-  const [shortenedUrl, setShortenedUrl] = useState('')
-  useEffect(() => {
-    (async () => {
-      const URL = '/shorten'
-      const PARAMS = {
-        "original_url": "https://www.youtube.com",
-        "slug": "ytmasta",
-        "expires_at": "2025-12-31T23:59:59.999Z",
-        "utm_source": "google",
-        "utm_medium": "cpc",
-        "utm_campaign": "test"
-      }
-      const response = await postRequest(URL, PARAMS)
-      setShortenedUrl(response?.shortened_url)
-    })()
-  }, [])
-
+export default function App() {
   return (
-    <div className="text-3xl font-bold underline text-red-500">
-      <a href={shortenedUrl}>{shortenedUrl}</a>
-    </div>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col">
+      <Container>
+        <Header />
+        <Content />
+        <Footer />
+      </Container>
+    </main>
   )
 }
-
-export default App
