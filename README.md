@@ -32,3 +32,18 @@ A simple backend + frontend URL shortener service built with support for custom 
 
    ```bash
    npm install
+   ```
+2. Create .env file with:
+   ```js
+   PORT=8080
+   MYSQL_HOST=your-mysql-host
+   MYSQL_USER=your-mysql-user
+   MYSQL_PW=your-mysql-password
+   MYSQL_DB=your-mysql-database
+   
+   REDIS_HOST=your-redis-host
+   REDIS_PORT=your-redis-port
+   REDIS_PW=your-redis-password
+   
+   BASE_URL=http://localhost:8080
+   ```
