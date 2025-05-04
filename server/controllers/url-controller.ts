@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import shortid from 'shortid'
 import Url from '../database/models/url-model'
+import { BASE_URL, PORT } from '../config/load-env'
 import { getFromCache, setToCache, deleteFromCache } from '../services/redis-service'
 
 interface CreateUrlRequestBody {
@@ -20,6 +21,7 @@ export const createShortUrl = async (
   req: Request<{}, {}, CreateUrlRequestBody>,
   res: Response<ShortenedUrl | { message: string }>
 ): Promise<void> => {
+  const currentDate = new Date()
   const {
     original_url,
     slug,
@@ -53,16 +55,17 @@ export const createShortUrl = async (
 
   const cachedUrl = await getFromCache(finalUrl)
   if (cachedUrl) {
-    res.json({ shortened_url: cachedUrl })
-    return
-  }
+    const dbUrl = await Url.findOne({ where: { original_url: finalUrl }})
+    if (dbUrl && dbUrl.expires_at && currentDate > new Date(dbUrl.expires_at)) {
+      dbUrl.is_active = false;
+      await dbUrl.save()
+      await deleteFromCache(finalUrl)
+      res.status(410).json({ message: 'This URL has expired.' })
+      return
+    }
 
-  const existingUrl: Url | null = await Url.findOne({ where: { original_url: finalUrl }})
-  if (existingUrl) {
-    await setToCache(finalUrl, existingUrl.shortened_url, 60 * 60 * 24);
-    res.json({
-      shortened_url: existingUrl.shortened_url
-    })
+    // TODO: Redirection works, but find a way to remove :PORT/api/
+    res.json({ shortened_url: BASE_URL! + ':' + PORT! + '/' + 'api/' + cachedUrl })
     return
   }
 
@@ -70,7 +73,6 @@ export const createShortUrl = async (
   const existingSlug = await Url.findOne({ where: { shortened_url: generatedSlug }})
   if (existingSlug) {
     res.status(400).json({ message: 'Slug already taken. Please choose another one. '})
-    return
   }
 
   let parsedExpirationDate: Date | null = null
@@ -78,14 +80,13 @@ export const createShortUrl = async (
     parsedExpirationDate = new Date(expires_at)
     if (isNaN(parsedExpirationDate.getTime())) {
       res.status(400).json({ message: 'Invalid expiration date. '})
-      return
     }
   }
 
   try {
     const newUrl: Url = await Url.create({
       original_url: finalUrl,
-      shortened_url: generatedSlug, // Supposedly, this one should have base_url, but I'll get it from FE.
+      shortened_url: generatedSlug,
       expires_at: parsedExpirationDate,
       utm_parameters: utmParameters,
       is_active: true
@@ -93,8 +94,9 @@ export const createShortUrl = async (
 
     await setToCache(finalUrl, newUrl.shortened_url, 60 * 60 * 24);
 
+    // TODO: Redirection works, but find a way to remove :PORT/api/
     res.status(201).json({
-      shortened_url: newUrl.shortened_url
+      shortened_url: BASE_URL! + ':' + PORT! + '/' + 'api/' + newUrl.shortened_url
     })
   } catch (error) {
     console.error('Failed to shorted URL: ', error)
@@ -126,7 +128,6 @@ export const redirectUrl = async (
     url.is_active = false
     await url.save()
     res.status(410).json({ message: 'This URL has expired.' })
-    return
   }
 
   await setToCache(shortened_url, url.original_url, 60 * 60 * 24);

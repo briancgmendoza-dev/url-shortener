@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import { connectDb } from './database/db'
 import urlRoutes from './routes/url-routes'
+import { PORT } from './config/load-env'
 
 dotenv.config()
 
@@ -23,9 +24,9 @@ app.use('/', (req, res) => {
 const startServer = async (): Promise<void> => {
   try {
     await connectDb()
-    const PORT = process.env.PORT || 8080;
+    const LOADED_PORT = PORT || 8080;
     app.listen(PORT, () => {
-      console.log(`Server is running on PORT ${PORT}`)
+      console.log(`Server is running on PORT ${LOADED_PORT}`)
     })
   } catch (error) {
     console.error('Error starting server: ', error)

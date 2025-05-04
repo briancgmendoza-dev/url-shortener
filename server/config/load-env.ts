@@ -9,5 +9,7 @@ export const {
   MYSQL_DB,
   REDIS_HOST,
   REDIS_PORT,
-  REDIS_PW
+  REDIS_PW,
+  BASE_URL,
+  PORT
 } = process.env
