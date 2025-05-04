@@ -60,7 +60,8 @@ A simple backend + frontend URL shortener service built with support for custom 
    ```
 2. Create .env file in client folder with the ff:
    ```js
-   VITE_API_BASE_URL=http://localhost:8080/api
-   ```
-3. Run the command ```npm run start:dev``` in your terminal (Should be in client folder).
 
+
+### Postman Setup
+
+1. Check ```how-to-test-api.text``` for endpoint and params.
